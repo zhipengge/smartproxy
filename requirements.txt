@@ -1,0 +1,12 @@
+# SmartProxy 依赖
+# 使用: pip install -r requirements.txt
+
+Flask>=3.0.0
+flask-socketio>=5.3.0
+flask-cors>=4.0.0
+python-socketio>=5.10.0
+eventlet>=0.35.0
+PyYAML>=6.0.0
+
+# 可选：用于生产部署
+# gunicorn>=21.0.0
