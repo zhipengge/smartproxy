@@ -4,7 +4,7 @@
 
 ## 功能特性
 
-- **代理应用**：网页添加 Telegram、Discord 等，从应用菜单启动「xxx (经代理)」，其他应用默认直连
+- **代理应用**：网页添加 Telegram、Discord 等，点击「启动」或从应用菜单启动「xxx (经代理)」，其他应用默认直连（经 proxychains 走 SSH 隧道 1080）
 - **规则管理**：按域名配置代理/直连，支持通配符（`*.example.com`）
 - **SSH 隧道**：通过 SSH 建立 SOCKS5 上游代理
 - **自动收集**：系统代理设为 SmartProxy 后，自动记录访问并更新状态
@@ -36,6 +36,20 @@ python app.py
 访问 http://localhost:5000，在「代理应用」中添加 Telegram 等，从应用菜单启动「xxx (经代理)」即可。
 
 **完整步骤见** [docs/INSTALL.md](docs/INSTALL.md)
+
+### 代理应用实现原理
+
+代理应用（如 Telegram）不认系统代理，需通过 **proxychains** 强制走代理：
+
+```
+应用启动 → proxychains 包装 → proxychains.conf → socks5://127.0.0.1:1080 (SSH 隧道)
+```
+
+- **proxychains**：用 LD_PRELOAD 拦截应用的网络调用，强制经 SOCKS5 发出
+- **1080 端口**：SSH 隧道的本机 SOCKS5 出口，直连 VPS
+- 不走 SmartProxy 1081，兼容性更好
+
+详见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#代理应用实现原理)
 
 ### 配置文件
 
@@ -86,6 +100,7 @@ smartproxy/
 |------|------|------|
 | GET | /api/proxy-apps | 代理应用列表 |
 | POST | /api/proxy-apps | 添加代理应用 |
+| POST | /api/proxy-apps/\<name\>/launch | 启动代理应用 |
 | DELETE | /api/proxy-apps/\<name\> | 移除代理应用 |
 | GET | /api/proxy-apps/presets | 预设应用（含自动检测路径） |
 | GET | /api/status | 系统状态 |
@@ -133,6 +148,16 @@ smartproxy/
 | Telegram 仍无法连接 | 检查 VPS 是否为境外，本地执行 `curl -x socks5://127.0.0.1:1080 https://api.telegram.org` 测试 |
 | SSH 隧道启动失败 | 检查 config.yaml 中 remote_host、key |
 | 总请求为 0 | 将系统代理设为 `http://127.0.0.1:8080` |
+| **OpenClaw 连不上 Telegram** | 见下方「OpenClaw 与 SmartProxy 共存」 |
+
+### OpenClaw 与 SmartProxy 共存
+
+**推荐**：OpenClaw 的 Telegram 通道使用 `proxy: socks5://127.0.0.1:1081`（经 SmartProxy），而非直连 1080，可避免与代理应用冲突：
+
+- 1081：SmartProxy SOCKS5，按规则将 `*.telegram.org` 转发至 1080
+- 1080：SSH 隧道直连，供 Telegram Desktop（proxychains）使用
+
+若使用 1080 直连导致 OpenClaw 连不上 TG，改为 1081 即可。确保 SmartProxy 已启动。
 
 ## 许可证
 

@@ -34,7 +34,48 @@ SmartProxy 提供**三层代理入口**，统一由规则引擎决定直连或�
 
 ---
 
-## 二、优雅性评估
+## 二、代理应用实现原理
+
+代理应用（如 Telegram、Discord）**不读取系统代理或环境变量**，普通启动会直连，需通过 **proxychains** 在进程内拦截网络调用。
+
+### 代理链路
+
+```
+应用启动 → proxychains 包装 → proxychains.conf → socks5://127.0.0.1:1080 (SSH 隧道)
+```
+
+### 各环节说明
+
+| 环节 | 说明 |
+|------|------|
+| **proxychains** | 通过 LD_PRELOAD 劫持 `connect()` 等系统调用，强制进程的 TCP 连接经配置的 SOCKS5 代理发出 |
+| **proxychains.conf** | 位于 `~/.config/smartproxy/proxychains.conf`，配置 `socks5 127.0.0.1 1080` |
+| **1080 端口** | SSH 隧道的本机 SOCKS5 出口，流量经 VPS 转发至目标 |
+| **为何直连 1080** | 不经过 SmartProxy 1081，避免规则引擎和二次转发，Telegram 等应用兼容性更好 |
+
+### 启动脚本示例
+
+`~/.local/bin/telegram-via-proxy` 内容类似：
+
+```bash
+exec proxychains4 -f ~/.config/smartproxy/proxychains.conf /path/to/Telegram -many -workdir ...
+```
+
+### 依赖
+
+需安装 `proxychains4`：`sudo apt install proxychains4`。未安装则无法生成代理启动脚本，网页添加代理应用会失败。
+
+### 文件位置
+
+| 类型 | 路径 |
+|------|------|
+| 启动脚本 | `~/.local/bin/{name}-via-proxy` |
+| 桌面入口 | `~/.local/share/applications/{name}-via-proxy.desktop` |
+| proxychains 配置 | `~/.config/smartproxy/proxychains.conf` |
+
+---
+
+## 三、优雅性评估
 
 ### ✅ 做得好的地方
 
@@ -64,7 +105,7 @@ SmartProxy 提供**三层代理入口**，统一由规则引擎决定直连或�
 
 ---
 
-## 三、配置项总览
+## 四、配置项总览
 
 | 配置路径 | 说明 | 默认值 |
 |----------|------|--------|

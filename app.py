@@ -316,6 +316,14 @@ def api_proxy_apps_add():
         return jsonify({"success": False, "message": str(e)}), 500
 
 
+@app.route('/api/proxy-apps/<name>/launch', methods=['POST'])
+def api_proxy_apps_launch(name):
+    """从网页点击启动代理应用"""
+    from smartproxy.proxy_apps import launch_proxy_app
+    success, message = launch_proxy_app(name)
+    return jsonify({"success": success, "message": message})
+
+
 @app.route('/api/proxy-apps/<name>', methods=['DELETE'])
 def api_proxy_apps_remove(name):
     """移除走代理的应用"""

@@ -103,7 +103,9 @@ python app.py
 
 ### 4.2 启动 Telegram
 
-从应用菜单启动 **「Telegram (经代理)」**，不要启动普通的 Telegram。
+在网页点击 **「启动」**，或从应用菜单启动 **「Telegram (经代理)」**，不要启动普通的 Telegram。
+
+应用经 **proxychains** 走代理：proxychains 拦截网络调用，强制经 `socks5://127.0.0.1:1080`（SSH 隧道）发出，Telegram 等不认系统代理的应用可正常访问。
 
 ### 4.3 添加其他应用
 
@@ -141,7 +143,7 @@ python app.py
 4. python app.py
 5. 浏览器打开 http://localhost:5000
 6. 在「代理应用」添加 Telegram
-7. 从应用菜单启动「Telegram (经代理)」
+7. 点击「启动」或从应用菜单启动「Telegram (经代理)」
 8. Cursor、浏览器等默认直连，无需配置
 ```
 
@@ -152,7 +154,7 @@ python app.py
 | 功能 | 说明 |
 |------|------|
 | SSH 隧道 | 启动/停止，查看状态 |
-| 代理应用 | 添加/移除走代理的应用 |
+| 代理应用 | 添加/移除、网页点击「启动」 |
 | 规则管理 | 添加、删除、编辑、测试域名规则 |
 | 流量统计 | 总请求、直连/代理数量 |
 | 状态列表 | 各域名访问次数、速度等 |
@@ -169,3 +171,4 @@ python app.py
 | 快捷按钮路径为空 | Telegram 未在常见位置 | 手动填写可执行路径（如 `~/install/Telegram/Telegram`） |
 | SSH 隧道启动失败 | 配置错误 | 检查 remote_host、key、端口 |
 | Cursor 等异常 | 启用了透明代理 | 在「透明代理（高级）」中点击「禁用」 |
+| **OpenClaw 连不上 TG** | 代理端口冲突 | OpenClaw 的 Telegram 配置用 `socks5://127.0.0.1:1081` 而非 1080 |

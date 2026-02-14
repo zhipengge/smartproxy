@@ -4,8 +4,9 @@
 
 import os
 import shutil
+import subprocess
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 
 BIN_DIR = Path.home() / ".local/bin"
@@ -83,6 +84,36 @@ Categories=Network;
     desktop_path.write_text(desktop_content)
 
     return str(bin_path), str(desktop_path)
+
+
+def get_launcher_path(name: str) -> Path:
+    """获取代理启动脚本路径"""
+    name = name.strip().lower().replace(" ", "-")
+    return BIN_DIR / f"{name}-via-proxy"
+
+
+def launch_proxy_app(name: str) -> Tuple[bool, str]:
+    """
+    从网页点击启动代理应用。
+    返回 (成功, 消息)。
+    """
+    name = name.strip().lower().replace(" ", "-")
+    bin_path = get_launcher_path(name)
+    if not bin_path.exists():
+        return False, f"启动脚本不存在，请先在「代理应用」中添加 {name}"
+    try:
+        subprocess.Popen(
+            [str(bin_path)],
+            start_new_session=True,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            env=os.environ.copy(),
+            cwd=str(Path.home()),
+        )
+        return True, "已启动"
+    except Exception as e:
+        return False, str(e)
 
 
 def remove_launcher(name: str, desktop_name: str = "") -> bool:
