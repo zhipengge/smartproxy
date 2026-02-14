@@ -120,6 +120,28 @@ class SmartProxyCore:
         
         # 添加默认规则
         self._add_default_rules()
+        # 合并重复规则（如 huggingface.co 与 *.huggingface.co 保留后者）
+        self._deduplicate_rules()
+    
+    def _deduplicate_rules(self):
+        """合并重复规则：*.domain 与 domain 同时存在时，保留 *.domain"""
+        to_remove = []
+        for rule in self.rules:
+            if rule.domain.startswith("*."):
+                base = rule.domain[2:]
+                for other in self.rules:
+                    if other is not rule and other.domain == base and other.action == rule.action:
+                        to_remove.append((other, rule.domain))
+        removed = False
+        seen = set()
+        for r, wildcard in to_remove:
+            if r in self.rules and id(r) not in seen:
+                seen.add(id(r))
+                self.rules.remove(r)
+                self.log(f"合并重复规则: 移除 {r.domain}（已由 {wildcard} 涵盖）")
+                removed = True
+        if removed:
+            self.save_rules()
     
     def _add_default_rules(self):
         """添加默认规则，使用 *.domain 以匹配主站及所有子域名"""
@@ -630,6 +652,9 @@ class SmartProxyCore:
         "*.googleapis.com": "www.googleapis.com",
         "*.github.com": "api.github.com",
         "*.anthropic.com": "api.anthropic.com",
+        "*.huggingface.co": "huggingface.co",
+        "*.githubusercontent.com": "raw.githubusercontent.com",
+        "*.openai.com": "api.openai.com",
     }
     
     def test_rule_speed(self, domain: str) -> dict:
