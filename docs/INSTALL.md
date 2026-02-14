@@ -171,4 +171,3 @@ python app.py
 | 快捷按钮路径为空 | Telegram 未在常见位置 | 手动填写可执行路径（如 `~/install/Telegram/Telegram`） |
 | SSH 隧道启动失败 | 配置错误 | 检查 remote_host、key、端口 |
 | Cursor 等异常 | 启用了透明代理 | 在「透明代理（高级）」中点击「禁用」 |
-| **OpenClaw 连不上 TG** | 代理端口冲突 | OpenClaw 的 Telegram 配置用 `socks5://127.0.0.1:1081` 而非 1080 |
